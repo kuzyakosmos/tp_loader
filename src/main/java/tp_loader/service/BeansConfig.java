@@ -1,4 +1,4 @@
-package service;
+package tp_loader.service;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
