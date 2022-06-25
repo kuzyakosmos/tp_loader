@@ -1,34 +1,34 @@
 package tp_loader.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import tp_loader.model.CompanyDto;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+@Slf4j
 @Service
 public class CompanyLoader {
+
+    private RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
     List<String> companies;
 
-    public String load() {
-        HttpClient client = HttpClient.newBuilder().build();
-        HttpRequest request = HttpRequest.newBuilder()
-                .GET()
-                .uri((URI.create("https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_ee567917a6b640bb8602834c9d30e571")))
-                .build();
-        HttpResponse<String> response = null;
-        try {
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+    public List<CompanyDto> load() {
 
-        return response.body();
+        String url = "https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_ee567917a6b640bb8602834c9d30e571";
+        try {
+            ResponseEntity<CompanyDto[]> response = restTemplate.getForEntity(url, CompanyDto[].class);
+            return  Arrays.asList(Objects.requireNonNull(response.getBody()));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 }

@@ -14,7 +14,7 @@ public class LoaderController {
     LoadHandler handler;
 
     @GetMapping("/run")
-    void all() {
-        handler.execute();
+    String all() {
+        return handler.execute();
     }
 }
