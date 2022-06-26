@@ -1,11 +1,15 @@
 package tp_loader.handler;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import tp_loader.model.CompanyDto;
-import tp_loader.service.CompanyLoader;
+import tp_loader.dto.CompanyDto;
+import tp_loader.dto.StockInfoDto;
+import tp_loader.service.CompaniesService;
+import tp_loader.service.StockInfoService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -13,19 +17,46 @@ import java.util.stream.Collectors;
 @Service
 public class LoadHandler {
 
+    //    @Value("${application.properties.batch.size}")
+    private int batchSize = 1000;
+    private int threadsCount = 10;
+
     @Autowired
-    CompanyLoader companyLoader;
+    CompaniesService companiesService;
+
+    @Autowired
+    StockInfoService stockInfoService;
+
+
+    {
+        log.info("Parameter batch.size=" + batchSize);
+        log.info("Parameter threads.count=" + threadsCount);
+    }
 
     public String execute() {
         log.info("Start loading traiding companies");
 
         try {
-            List<String> companies =  companyLoader.load().stream().map(CompanyDto::getSymbol).collect(Collectors.toList());
+            List<String> companies = companiesService.loadCompanies().stream()
+                    .map(CompanyDto::getSymbol).collect(Collectors.toList());
+            log.info("Loaded {} companies", companies.size());
 
-            log.info("Loaded " + companies.size() + " companies");
+            //сделать метод для записи в БД одного батча, пока без многопоточки
+
+            var batches = prepareBatches(companies);
+
+            List<StockInfoDto> stockInfos = new ArrayList<>();
+            batches.get(0).forEach(s -> stockInfos.add(stockInfoService.loadStockInfo(s)));
+            stockInfoService.saveStockInfo(stockInfos);
+
+
         } catch (Exception ex) {
             log.error(ex.getMessage());
         }
         return null;
+    }
+
+    private List<List<String>> prepareBatches(List<String> companies) {
+        return Lists.partition(companies, batchSize);
     }
 }

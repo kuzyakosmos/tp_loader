@@ -1,0 +1,11 @@
+db:
+  url: jdbc:postgresql://localhost:5432/customers
+  username: postgres
+  password:
+  driverClassName: org.postgresql.Driver
+
+batch:
+  size: 1000
+
+threads:
+  count: 8

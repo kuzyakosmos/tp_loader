@@ -1,10 +1,9 @@
-package tp_loader.model;
+package tp_loader.dto;
 
 import lombok.Data;
 
 @Data
 public class CompanyDto {
-
     private String symbol;
     private String exchange;
     private String exchangeSuffix;
