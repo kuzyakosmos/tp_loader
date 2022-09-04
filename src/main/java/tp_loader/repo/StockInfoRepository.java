@@ -1,7 +1,7 @@
 package tp_loader.repo;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import tp_loader.model.StockInfoModel;
 
-@Repository
-public class StockInfoRepository {
+public interface StockInfoRepository extends JpaRepository<StockInfoModel, Integer> {
 }

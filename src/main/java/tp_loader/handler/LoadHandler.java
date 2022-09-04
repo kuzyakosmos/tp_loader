@@ -3,6 +3,7 @@ package tp_loader.handler;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tp_loader.dto.CompanyDto;
 import tp_loader.dto.StockInfoDto;
@@ -17,9 +18,11 @@ import java.util.stream.Collectors;
 @Service
 public class LoadHandler {
 
-    //    @Value("${application.properties.batch.size}")
-    private int batchSize = 1000;
-    private int threadsCount = 10;
+    @Value("${batch.size}")
+    private int batchSize;
+
+    @Value("${threads.count}")
+    private int threadsCount;
 
     @Autowired
     CompaniesService companiesService;
@@ -37,6 +40,7 @@ public class LoadHandler {
         log.info("Start loading traiding companies");
 
         try {
+            //Сначала загружаем компании
             List<String> companies = companiesService.loadCompanies().stream()
                     .map(CompanyDto::getSymbol).collect(Collectors.toList());
             log.info("Loaded {} companies", companies.size());
@@ -57,6 +61,6 @@ public class LoadHandler {
     }
 
     private List<List<String>> prepareBatches(List<String> companies) {
-        return Lists.partition(companies, batchSize);
+        return Lists.partition(companies, 10);
     }
 }
