@@ -2,19 +2,18 @@ package tp_loader.model;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @ToString
 @Builder(toBuilder = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "stock_info")
 public class StockInfoModel {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    //TODO: differences between types?
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     private String avgTotalVolume;

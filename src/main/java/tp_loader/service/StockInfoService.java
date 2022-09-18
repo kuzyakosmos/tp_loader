@@ -1,7 +1,8 @@
 package tp_loader.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tp_loader.dto.StockInfoDto;
@@ -12,24 +13,24 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class StockInfoService {
+
+    @Value("${iex.api.host}")
+    private String iexApiHost;
+    @Value("${iex.api.token}")
+    private String iexApiToken;
     private final StockInfoRepository stockInfoRepository;
 
-    private RestTemplate restTemplate = new RestTemplate();
-
-    @Autowired
-    public StockInfoService(StockInfoRepository stockInfoRepository) {
-        this.stockInfoRepository = stockInfoRepository;
-    }
+    private final RestTemplate restTemplate;
 
     public StockInfoDto loadStockInfo(String symbol) {
-        String url = "https://sandbox.iexapis.com/stable/stock/" + symbol + "/quote?token=Tpk_ee567917a6b640bb8602834c9d30e571";
+        String url = String.format("%s/stable/stock/%s/quote?token=%s", iexApiHost, symbol, iexApiToken);
         try {
-            StockInfoDto response = restTemplate.getForObject(url, StockInfoDto.class);
-            return response;
+            return restTemplate.getForObject(url, StockInfoDto.class);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            log.error("Error loading info for {} company: {}", symbol, e.getMessage());
         }
         return null;
     }
@@ -46,7 +47,11 @@ public class StockInfoService {
                         .companyName(dto.getCompanyName())
                         .build()))
                 .collect(Collectors.toList());
-
-        stockInfoRepository.saveAll(models);
+        try {
+            stockInfoRepository.saveAll(models);
+            log.info("Saved {} companies", models.size());
+        } catch (Exception ex) {
+            log.error("Error with saving batch to db: {}", ex.getMessage());
+        }
     }
 }
