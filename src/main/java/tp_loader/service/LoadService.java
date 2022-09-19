@@ -6,9 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tp_loader.dto.CompanyDto;
-import tp_loader.dto.StockInfoDto;
 import tp_loader.repo.StockInfoRepository;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
@@ -52,19 +53,31 @@ public class LoadService {
             long start = System.currentTimeMillis();
 
             ExecutorService executorService = Executors.newFixedThreadPool(threadsCount);
+
+            CompletableFuture<?>[] futures = new CompletableFuture[batchSize];
+            int i = 0;
             for (List<String> batch : batches) {
-                executorService.submit(() -> {
-                    List<StockInfoDto> stockInfoDtos =
-                            batch.stream().map(stockInfoService::loadStockInfo)
-                                    .filter(Objects::nonNull)
-                                    .collect(Collectors.toList());
-                    stockInfoService.saveStockInfo(stockInfoDtos);
-                    return "jkbkj";
-                });
+                CompletableFuture<?> future = CompletableFuture.supplyAsync(() ->
+                                batch.stream().map(stockInfoService::loadStockInfo)
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.toList()), executorService)
+                        .thenAccept(stockInfoService::saveStockInfo);
+                futures[i] = future;
+                i++;
             }
-            executorService.awaitTermination(20, TimeUnit.MINUTES);
+            CompletableFuture.allOf(futures).join();
+
+//            for (List<String> batch : batches) {
+//                executorService.submit(() ->
+//                        stockInfoService.saveStockInfo(batch.stream().map(stockInfoService::loadStockInfo)
+//                                .filter(Objects::nonNull)
+//                                .collect(Collectors.toList())));
+//            }
+//            executorService.awaitTermination(1,TimeUnit.HOURS);
+
             long finish = System.currentTimeMillis();
-            log.info("Обработка заняла {}", finish - start);
+            log.info("Обработка заняла {}", TimeUnit.MILLISECONDS.toSeconds(finish - start));
+
         } catch (Exception ex) {
             log.error(ex.getMessage());
         }
